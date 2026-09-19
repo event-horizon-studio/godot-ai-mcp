@@ -110,4 +110,93 @@ export function registerSceneTools(server: McpServer, bridge: GodotBridge) {
             }
         }
     );
+
+    server.tool('godot_connect_signal',
+        'Connect a signal from a source node to a target node method with undo/redo support.',
+        {
+            source_path: z.string().describe('Path to the node emitting the signal, e.g. Button or Area3D'),
+            signal_name: z.string().describe('Name of the signal, e.g. pressed, body_entered'),
+            target_path: z.string().describe('Path to the target node with the receiving method'),
+            method_name: z.string().describe('Name of the receiving method, e.g. _on_button_pressed')
+        },
+        async ({ source_path, signal_name, target_path, method_name }) => {
+            try {
+                const res = await bridge.sendRequest('connect_signal', { source_path, signal_name, target_path, method_name });
+                return formatResult(res);
+            } catch (e) {
+                return formatError(e);
+            }
+        }
+    );
+
+    server.tool('godot_get_node_connections',
+        'List all outgoing signal connections for a given node.',
+        {
+            node_path: z.string().describe('Path to the node')
+        },
+        async ({ node_path }) => {
+            try {
+                const res = await bridge.sendRequest('get_node_connections', { node_path });
+                return formatResult(res);
+            } catch (e) {
+                return formatError(e);
+            }
+        }
+    );
+
+    server.tool('godot_create_primitive_mesh',
+        'Create a MeshInstance3D with a primitive mesh (box, sphere, capsule, cylinder, plane) in one step with undo/redo support.',
+        {
+            parent_path: z.string().describe('Path to the parent node'),
+            mesh_type: z.enum(['box', 'sphere', 'capsule', 'cylinder', 'plane']).describe('Type of primitive mesh'),
+            node_name: z.string().optional().describe('Name for the MeshInstance3D (default: MeshInstance3D)'),
+            size: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Size vector for box/plane'),
+            radius: z.number().optional().describe('Radius for sphere/capsule/cylinder (default: 0.5)'),
+            height: z.number().optional().describe('Height for capsule/cylinder (default: 2.0)'),
+            material_path: z.string().optional().describe('Optional resource path to a material (.tres) to apply')
+        },
+        async ({ parent_path, mesh_type, node_name = 'MeshInstance3D', size, radius = 0.5, height = 2.0, material_path = '' }) => {
+            try {
+                const res = await bridge.sendRequest('create_primitive_mesh', {
+                    parent_path,
+                    mesh_type,
+                    node_name,
+                    size,
+                    radius,
+                    height,
+                    material_path
+                });
+                return formatResult(res);
+            } catch (e) {
+                return formatError(e);
+            }
+        }
+    );
+
+    server.tool('godot_create_collision_shape',
+        'Create a CollisionShape3D with a specified 3D shape (box, sphere, capsule, cylinder) in one step with undo/redo support.',
+        {
+            parent_path: z.string().describe('Path to the parent physics body (e.g. CharacterBody3D, StaticBody3D, Area3D)'),
+            shape_type: z.enum(['box', 'sphere', 'capsule', 'cylinder']).describe('Type of collision shape'),
+            node_name: z.string().optional().describe('Name for the CollisionShape3D (default: CollisionShape3D)'),
+            size: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Size vector for box shape'),
+            radius: z.number().optional().describe('Radius for sphere/capsule/cylinder (default: 0.5)'),
+            height: z.number().optional().describe('Height for capsule/cylinder (default: 2.0)')
+        },
+        async ({ parent_path, shape_type, node_name = 'CollisionShape3D', size, radius = 0.5, height = 2.0 }) => {
+            try {
+                const res = await bridge.sendRequest('create_collision_shape', {
+                    parent_path,
+                    shape_type,
+                    node_name,
+                    size,
+                    radius,
+                    height
+                });
+                return formatResult(res);
+            } catch (e) {
+                return formatError(e);
+            }
+        }
+    );
 }

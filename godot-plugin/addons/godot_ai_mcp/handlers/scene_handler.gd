@@ -186,6 +186,210 @@ func reparent_node(params: Dictionary) -> Variant:
 	}
 
 
+func connect_signal(params: Dictionary) -> Variant:
+	var source_path: String = params.get("source_path", "")
+	var signal_name: String = params.get("signal_name", "")
+	var target_path: String = params.get("target_path", "")
+	var method_name: String = params.get("method_name", "")
+
+	if source_path.is_empty() or signal_name.is_empty() or target_path.is_empty() or method_name.is_empty():
+		return {"error": {"code": -1, "message": "Missing required params: source_path, signal_name, target_path, method_name"}}
+
+	var source_node := _get_node_by_path(source_path)
+	if not source_node:
+		return {"error": {"code": -1, "message": "Source node not found: " + source_path}}
+
+	var target_node := _get_node_by_path(target_path)
+	if not target_node:
+		return {"error": {"code": -1, "message": "Target node not found: " + target_path}}
+
+	if not source_node.has_signal(signal_name):
+		return {"error": {"code": -1, "message": "Node %s does not have signal: %s" % [source_node.name, signal_name]}}
+
+	var callable := Callable(target_node, method_name)
+	if source_node.is_connected(signal_name, callable):
+		return {"error": {"code": -1, "message": "Signal already connected to %s.%s" % [target_node.name, method_name]}}
+
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("MCP: Connect Signal %s -> %s" % [signal_name, method_name])
+	undo_redo.add_do_method(source_node, "connect", signal_name, callable)
+	undo_redo.add_undo_method(source_node, "disconnect", signal_name, callable)
+	undo_redo.commit_action()
+
+	return {
+		"success": true,
+		"source": source_node.name,
+		"signal": signal_name,
+		"target": target_node.name,
+		"method": method_name
+	}
+
+
+func get_node_connections(params: Dictionary) -> Variant:
+	var node_path: String = params.get("node_path", "")
+	if node_path.is_empty():
+		return {"error": {"code": -1, "message": "Missing required param: node_path"}}
+
+	var node := _get_node_by_path(node_path)
+	if not node:
+		return {"error": {"code": -1, "message": "Node not found: " + node_path}}
+
+	var outgoing: Array[Dictionary] = []
+	for sig in node.get_signal_list():
+		var conns := node.get_signal_connection_list(sig.name)
+		for conn in conns:
+			var target_obj = conn.get("callable", Callable()).get_object()
+			var target_method = conn.get("callable", Callable()).get_method()
+			outgoing.append({
+				"signal": sig.name,
+				"target": target_obj.name if target_obj is Node else str(target_obj),
+				"method": str(target_method)
+			})
+
+	return {
+		"node": node.name,
+		"connections": outgoing
+	}
+
+
+func create_primitive_mesh(params: Dictionary) -> Variant:
+	var parent_path: String = params.get("parent_path", "")
+	var mesh_type: String = params.get("mesh_type", "box").to_lower()
+	var node_name: String = params.get("node_name", "MeshInstance3D")
+	var size = params.get("size")
+	var radius: float = params.get("radius", 0.5)
+	var height: float = params.get("height", 2.0)
+	var material_path: String = params.get("material_path", "")
+
+	var scene_root := EditorInterface.get_edited_scene_root()
+	if not scene_root:
+		return {"error": {"code": -1, "message": "No active scene open"}}
+
+	var parent: Node = scene_root
+	if not parent_path.is_empty() and parent_path != ".":
+		parent = _get_node_by_path(parent_path)
+		if not parent:
+			return {"error": {"code": -1, "message": "Parent not found: " + parent_path}}
+
+	var mesh_node := MeshInstance3D.new()
+	mesh_node.name = node_name
+
+	var primitive: PrimitiveMesh
+	match mesh_type:
+		"box":
+			var box := BoxMesh.new()
+			if size != null:
+				box.size = _convert_value(size)
+			primitive = box
+		"sphere":
+			var sphere := SphereMesh.new()
+			sphere.radius = radius
+			sphere.height = radius * 2.0
+			primitive = sphere
+		"capsule":
+			var capsule := CapsuleMesh.new()
+			capsule.radius = radius
+			capsule.height = height
+			primitive = capsule
+		"cylinder":
+			var cyl := CylinderMesh.new()
+			cyl.top_radius = radius
+			cyl.bottom_radius = radius
+			cyl.height = height
+			primitive = cyl
+		"plane":
+			var plane := PlaneMesh.new()
+			if size != null:
+				var v = _convert_value(size)
+				plane.size = Vector2(v.x, v.y) if v is Vector2 else Vector2(v.x, v.z)
+			primitive = plane
+		_:
+			return {"error": {"code": -1, "message": "Unknown mesh_type: " + mesh_type + ". Use box, sphere, capsule, cylinder, plane."}}
+
+	if not material_path.is_empty() and ResourceLoader.exists(material_path):
+		primitive.material = ResourceLoader.load(material_path)
+
+	mesh_node.mesh = primitive
+
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("MCP: Create Primitive Mesh " + node_name)
+	undo_redo.add_do_method(parent, "add_child", mesh_node, true)
+	undo_redo.add_do_method(mesh_node, "set_owner", scene_root)
+	undo_redo.add_do_reference(mesh_node)
+	undo_redo.add_undo_method(parent, "remove_child", mesh_node)
+	undo_redo.commit_action()
+
+	return {
+		"success": true,
+		"node_name": node_name,
+		"node_path": str(scene_root.get_path_to(mesh_node)),
+		"mesh_type": mesh_type
+	}
+
+
+func create_collision_shape(params: Dictionary) -> Variant:
+	var parent_path: String = params.get("parent_path", "")
+	var shape_type: String = params.get("shape_type", "box").to_lower()
+	var node_name: String = params.get("node_name", "CollisionShape3D")
+	var size = params.get("size")
+	var radius: float = params.get("radius", 0.5)
+	var height: float = params.get("height", 2.0)
+
+	var scene_root := EditorInterface.get_edited_scene_root()
+	if not scene_root:
+		return {"error": {"code": -1, "message": "No active scene open"}}
+
+	var parent: Node = scene_root
+	if not parent_path.is_empty() and parent_path != ".":
+		parent = _get_node_by_path(parent_path)
+		if not parent:
+			return {"error": {"code": -1, "message": "Parent not found: " + parent_path}}
+
+	var col_node := CollisionShape3D.new()
+	col_node.name = node_name
+
+	var shape: Shape3D
+	match shape_type:
+		"box":
+			var box := BoxShape3D.new()
+			if size != null:
+				box.size = _convert_value(size)
+			shape = box
+		"sphere":
+			var sphere := SphereShape3D.new()
+			sphere.radius = radius
+			shape = sphere
+		"capsule":
+			var capsule := CapsuleShape3D.new()
+			capsule.radius = radius
+			capsule.height = height
+			shape = capsule
+		"cylinder":
+			var cyl := CylinderShape3D.new()
+			cyl.radius = radius
+			cyl.height = height
+			shape = cyl
+		_:
+			return {"error": {"code": -1, "message": "Unknown shape_type: " + shape_type + ". Use box, sphere, capsule, cylinder."}}
+
+	col_node.shape = shape
+
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("MCP: Create Collision Shape " + node_name)
+	undo_redo.add_do_method(parent, "add_child", col_node, true)
+	undo_redo.add_do_method(col_node, "set_owner", scene_root)
+	undo_redo.add_do_reference(col_node)
+	undo_redo.add_undo_method(parent, "remove_child", col_node)
+	undo_redo.commit_action()
+
+	return {
+		"success": true,
+		"node_name": node_name,
+		"node_path": str(scene_root.get_path_to(col_node)),
+		"shape_type": shape_type
+	}
+
+
 # ── Private helpers ──────────────────────────────────────────────────────────
 
 func _get_node_by_path(path: String) -> Node:

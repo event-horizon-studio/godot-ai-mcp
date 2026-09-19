@@ -47,7 +47,7 @@ The MCP server process owns the STDIO transport cleanly (Godot's editor prints l
 
 ## Features
 
-### 17 Tools Across 5 Categories
+### 25 Tools Across 7 Categories
 
 | Category | Tool | Description |
 |----------|------|-------------|
@@ -56,12 +56,21 @@ The MCP server process owns the STDIO transport cleanly (Godot's editor prints l
 | | `godot_save_scene` | Save the active scene |
 | | `godot_run_project` | Run main or specific scene (F5 equivalent) |
 | | `godot_stop_project` | Stop running game |
+| | `godot_get_editor_logs` | Retrieve recent engine/editor logs for AI self-debugging |
 | **Scene** | `godot_get_scene_tree` | Full node hierarchy as JSON |
 | | `godot_get_node_info` | Detailed node inspection (transform, properties, signals, groups) |
 | | `godot_create_node` | Create node with undo/redo |
 | | `godot_modify_node_property` | Set any property with undo/redo |
 | | `godot_delete_node` | Delete node with undo/redo |
 | | `godot_reparent_node` | Move node to new parent with undo/redo |
+| | `godot_connect_signal` | Connect signals between nodes with undo/redo |
+| | `godot_get_node_connections` | List outgoing signal connections for a node |
+| | `godot_create_primitive_mesh` | One-shot 3D primitive mesh instance (Box, Sphere, Capsule, Cylinder, Plane) |
+| | `godot_create_collision_shape` | One-shot 3D collision shape (Box, Sphere, Capsule, Cylinder) |
+| **Input & Settings** | `godot_get_input_actions` | List all configured input actions and bound keys |
+| | `godot_add_input_action` | Add actions with key/mouse bindings to ProjectSettings |
+| | `godot_set_project_setting` | Set and save any ProjectSettings property |
+| **Resource** | `godot_create_material` | Create StandardMaterial3D (color, roughness, metallic, emission) |
 | **Script** | `godot_execute_gdscript` | Run arbitrary GDScript in editor context |
 | | `godot_create_script` | Create `.gd` file + optional node attachment |
 | | `godot_read_script` | Read script source code |

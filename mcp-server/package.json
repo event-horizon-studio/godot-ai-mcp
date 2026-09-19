@@ -1,6 +1,6 @@
 {
   "name": "godot-ai-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server that gives AI agents full control over the Godot 4.7+ editor — scene tree, node manipulation, GDScript execution, viewport capture, and ClassDB reflection.",
   "type": "module",
   "main": "build/index.js",

@@ -21,6 +21,8 @@ var _scene_handler: RefCounted = null
 var _script_handler: RefCounted = null
 var _viewport_handler: RefCounted = null
 var _reflection_handler: RefCounted = null
+var _input_handler: RefCounted = null
+var _resource_handler: RefCounted = null
 
 
 func _ready() -> void:
@@ -37,6 +39,9 @@ func _init_handlers() -> void:
 	_script_handler = preload("res://addons/godot_ai_mcp/handlers/script_handler.gd").new()
 	_viewport_handler = preload("res://addons/godot_ai_mcp/handlers/viewport_handler.gd").new()
 	_reflection_handler = preload("res://addons/godot_ai_mcp/handlers/reflection_handler.gd").new()
+	_input_handler = preload("res://addons/godot_ai_mcp/handlers/input_handler.gd").new()
+	_resource_handler = preload("res://addons/godot_ai_mcp/handlers/resource_handler.gd").new()
+
 
 
 func _process(_delta: float) -> void:
@@ -148,6 +153,8 @@ func _dispatch(method: String, params: Dictionary) -> Variant:
 			return _editor_handler.run_project(params)
 		"stop_project":
 			return _editor_handler.stop_project(params)
+		"get_editor_logs":
+			return _editor_handler.get_editor_logs(params)
 
 		# Scene tools
 		"get_scene_tree":
@@ -162,6 +169,14 @@ func _dispatch(method: String, params: Dictionary) -> Variant:
 			return _scene_handler.delete_node(params)
 		"reparent_node":
 			return _scene_handler.reparent_node(params)
+		"connect_signal":
+			return _scene_handler.connect_signal(params)
+		"get_node_connections":
+			return _scene_handler.get_node_connections(params)
+		"create_primitive_mesh":
+			return _scene_handler.create_primitive_mesh(params)
+		"create_collision_shape":
+			return _scene_handler.create_collision_shape(params)
 
 		# Script tools
 		"execute_gdscript":
@@ -170,6 +185,18 @@ func _dispatch(method: String, params: Dictionary) -> Variant:
 			return _script_handler.create_script(params)
 		"read_script":
 			return _script_handler.read_script(params)
+
+		# Input & Project Settings tools
+		"get_input_actions":
+			return _input_handler.get_input_actions(params)
+		"add_input_action":
+			return _input_handler.add_input_action(params)
+		"set_project_setting":
+			return _input_handler.set_project_setting(params)
+
+		# Resource tools
+		"create_material":
+			return _resource_handler.create_material(params)
 
 		# Viewport tools
 		"get_viewport_screenshot":

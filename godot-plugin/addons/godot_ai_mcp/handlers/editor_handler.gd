@@ -66,3 +66,39 @@ func stop_project(_params: Dictionary) -> Dictionary:
 
 	EditorInterface.stop_playing_scene()
 	return {"success": true}
+
+
+func get_editor_logs(params: Dictionary) -> Dictionary:
+	var line_count: int = params.get("line_count", 50)
+	var log_path: String = ProjectSettings.get_setting("debug/settings/stdout/log_path", "user://logs/godot.log")
+	
+	if not FileAccess.file_exists(log_path):
+		# Fallback to standard godot log path
+		log_path = "user://logs/godot.log"
+		if not FileAccess.file_exists(log_path):
+			return {
+				"logs": [],
+				"message": "No log file found at user://logs/godot.log"
+			}
+
+	var file := FileAccess.open(log_path, FileAccess.READ)
+	if not file:
+		return {"error": {"code": -1, "message": "Failed to open log file at: " + log_path}}
+
+	var all_text := file.get_as_text()
+	file.close()
+
+	var lines := all_text.split("\n")
+	var start_idx := max(0, lines.size() - line_count)
+	var recent_lines: Array[String] = []
+	for i in range(start_idx, lines.size()):
+		var l := lines[i].strip_edges()
+		if not l.is_empty():
+			recent_lines.append(l)
+
+	return {
+		"total_lines": lines.size(),
+		"returned_lines": recent_lines.size(),
+		"logs": recent_lines
+	}
+

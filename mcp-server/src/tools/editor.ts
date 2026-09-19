@@ -84,4 +84,19 @@ export function registerEditorTools(server: McpServer, bridge: GodotBridge) {
             }
         }
     );
+
+    server.tool('godot_get_editor_logs',
+        'Retrieve the most recent Godot engine/editor log messages and errors for self-debugging.',
+        {
+            line_count: z.number().optional().describe('Number of recent log lines to retrieve (default: 50)')
+        },
+        async ({ line_count = 50 }) => {
+            try {
+                const res = await bridge.sendRequest('get_editor_logs', { line_count });
+                return formatResult(res);
+            } catch (e) {
+                return formatError(e);
+            }
+        }
+    );
 }
