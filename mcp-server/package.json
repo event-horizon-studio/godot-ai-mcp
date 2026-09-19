@@ -1,0 +1,55 @@
+{
+  "name": "godot-ai-mcp",
+  "version": "1.0.0",
+  "description": "MCP server that gives AI agents full control over the Godot 4.7+ editor — scene tree, node manipulation, GDScript execution, viewport capture, and ClassDB reflection.",
+  "type": "module",
+  "main": "build/index.js",
+  "bin": {
+    "godot-ai-mcp": "build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node build/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "godot",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "game-development",
+    "editor",
+    "gdscript",
+    "godot4",
+    "claude",
+    "cursor",
+    "copilot"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/event-horizon-studio/godot-ai-mcp"
+  },
+  "homepage": "https://github.com/event-horizon-studio/godot-ai-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/event-horizon-studio/godot-ai-mcp/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "build/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "@types/node": "^22.0.0"
+  }
+}
