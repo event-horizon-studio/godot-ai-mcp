@@ -172,7 +172,7 @@ Add to your workspace `.gemini/settings.json`:
 
 ---
 
-## Tool Reference (25 Tools)
+## Tool Reference (26 Tools)
 
 ### 1. Editor Lifecycle & Project Management
 | Tool | Description | Parameters |
@@ -182,7 +182,8 @@ Add to your workspace `.gemini/settings.json`:
 | `godot_save_scene` | Saves the currently active scene. | *(None)* |
 | `godot_run_project` | Launches project playback (F5 equivalent) or runs a specific scene file. | `scene_path` (string, optional) |
 | `godot_stop_project` | Stops the running playtest session. | *(None)* |
-| `godot_get_editor_logs` | Reads recent engine/editor logs and error traces for AI self-diagnosis. | `line_count` (number, default: 50) |
+| `godot_get_editor_logs` | Reads engine/editor logs from disk for self-diagnosis. | `line_count` (number, default: 50) |
+| `godot_get_editor_output` | Captures the exact live text, errors, and warnings visible in the Godot Output dock. | `line_count` (number, default: 50) |
 
 ### 2. Scene Graph & Node Manipulation (Undo/Redo Supported)
 | Tool | Description | Parameters |

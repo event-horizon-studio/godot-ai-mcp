@@ -156,6 +156,8 @@ func _dispatch(method: String, params: Dictionary) -> Variant:
 			return _editor_handler.stop_project(params)
 		"get_editor_logs":
 			return _editor_handler.get_editor_logs(params)
+		"get_editor_output":
+			return _editor_handler.get_editor_output(params)
 
 		# Scene tools
 		"get_scene_tree":

@@ -102,3 +102,51 @@ func get_editor_logs(params: Dictionary) -> Dictionary:
 		"logs": recent_lines
 	}
 
+
+func get_editor_output(params: Dictionary) -> Dictionary:
+	var line_count: int = params.get("line_count", 50)
+	var base := EditorInterface.get_base_control()
+	var stack: Array[Node] = [base]
+	var rtl: RichTextLabel = null
+
+	while not stack.is_empty():
+		var current := stack.pop_back()
+		if current.get_class() == "EditorLog":
+			var sub_stack: Array[Node] = [current]
+			while not sub_stack.is_empty():
+				var sub := sub_stack.pop_back()
+				if sub is RichTextLabel:
+					rtl = sub as RichTextLabel
+					break
+				for c in sub.get_children():
+					sub_stack.append(c)
+			break
+		for c in current.get_children():
+			stack.append(c)
+
+	if not rtl:
+		return {"error": {"code": -1, "message": "Could not locate EditorLog RichTextLabel in editor UI"}}
+
+	var full_text := rtl.get_parsed_text()
+	var all_lines := full_text.split("\n")
+	var start_idx := max(0, all_lines.size() - line_count)
+
+	var lines: Array[String] = []
+	var errors: Array[String] = []
+
+	for i in range(start_idx, all_lines.size()):
+		var l := all_lines[i].strip_edges()
+		if not l.is_empty():
+			lines.append(l)
+			if l.contains("ERROR:") or l.contains("Parse Error:") or l.contains("Compile Error:"):
+				errors.append(l)
+
+	return {
+		"total_lines": all_lines.size(),
+		"returned_lines": lines.size(),
+		"has_errors": not errors.is_empty(),
+		"errors": errors,
+		"output": lines
+	}
+
+

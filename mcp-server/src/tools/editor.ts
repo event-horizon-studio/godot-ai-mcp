@@ -99,4 +99,19 @@ export function registerEditorTools(server: McpServer, bridge: GodotBridge) {
             }
         }
     );
+
+    server.tool('godot_get_editor_output',
+        'Capture the exact live text, errors, warnings, and print statements currently visible in the Godot Output dock at the bottom of the editor.',
+        {
+            line_count: z.number().optional().describe('Number of recent lines to retrieve from the Output dock (default: 50)')
+        },
+        async ({ line_count = 50 }) => {
+            try {
+                const res = await bridge.sendRequest('get_editor_output', { line_count });
+                return formatResult(res);
+            } catch (e) {
+                return formatError(e);
+            }
+        }
+    );
 }
