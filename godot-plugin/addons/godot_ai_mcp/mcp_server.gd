@@ -74,7 +74,8 @@ func _process(_delta: float) -> void:
 		if available > 0:
 			var data := peer.get_data(available)
 			if data[0] == OK:  # data is [error_code, PackedByteArray]
-				var text := data[1].get_string_from_utf8()
+				var raw_bytes: PackedByteArray = data[1]
+				var text: String = raw_bytes.get_string_from_utf8()
 				_client_buffers[peer] += text
 				_process_buffer(peer)
 

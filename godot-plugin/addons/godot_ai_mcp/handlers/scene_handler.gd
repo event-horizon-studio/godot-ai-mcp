@@ -512,9 +512,9 @@ func _serialize_node_detail(node: Node) -> Dictionary:
 	return data
 
 
-func _get_class_hierarchy(class_name: String) -> Array:
+func _get_class_hierarchy(cls_name: String) -> Array:
 	var hierarchy := []
-	var current := class_name
+	var current := cls_name
 	while not current.is_empty():
 		hierarchy.append(current)
 		current = ClassDB.get_parent_class(current)

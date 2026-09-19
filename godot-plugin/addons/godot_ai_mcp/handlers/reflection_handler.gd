@@ -5,17 +5,17 @@ extends RefCounted
 
 
 func api_lookup(params: Dictionary) -> Variant:
-	var class_name: String = params.get("class_name", "")
-	if class_name.is_empty():
+	var target_class: String = params.get("class_name", "")
+	if target_class.is_empty():
 		return {"error": {"code": -1, "message": "Missing required param: class_name"}}
 
-	if not ClassDB.class_exists(class_name):
+	if not ClassDB.class_exists(target_class):
 		# Try fuzzy match — suggest similar class names
-		var suggestions := _find_similar_classes(class_name)
+		var suggestions := _find_similar_classes(target_class)
 		return {
 			"error": {
 				"code": -1,
-				"message": "Class not found: " + class_name,
+				"message": "Class not found: " + target_class,
 				"suggestions": suggestions,
 			}
 		}
@@ -23,15 +23,15 @@ func api_lookup(params: Dictionary) -> Variant:
 	var include_inherited: bool = params.get("include_inherited", false)
 
 	var result := {
-		"class_name": class_name,
-		"parent_class": ClassDB.get_parent_class(class_name),
-		"is_instantiable": ClassDB.can_instantiate(class_name),
-		"class_hierarchy": _get_hierarchy(class_name),
+		"class_name": target_class,
+		"parent_class": ClassDB.get_parent_class(target_class),
+		"is_instantiable": ClassDB.can_instantiate(target_class),
+		"class_hierarchy": _get_hierarchy(target_class),
 	}
 
 	# Properties
 	var properties := []
-	var prop_list := ClassDB.class_get_property_list(class_name, !include_inherited)
+	var prop_list := ClassDB.class_get_property_list(target_class, !include_inherited)
 	for prop in prop_list:
 		if prop.usage & PROPERTY_USAGE_EDITOR:
 			properties.append({
@@ -44,7 +44,7 @@ func api_lookup(params: Dictionary) -> Variant:
 
 	# Methods
 	var methods := []
-	var method_list := ClassDB.class_get_method_list(class_name, !include_inherited)
+	var method_list := ClassDB.class_get_method_list(target_class, !include_inherited)
 	for method in method_list:
 		var method_name: String = method.name
 		# Skip internal/private methods
@@ -65,7 +65,7 @@ func api_lookup(params: Dictionary) -> Variant:
 
 	# Signals
 	var signals := []
-	var signal_list := ClassDB.class_get_signal_list(class_name, !include_inherited)
+	var signal_list := ClassDB.class_get_signal_list(target_class, !include_inherited)
 	for sig in signal_list:
 		var sig_args := []
 		for arg in sig.get("args", []):
@@ -80,28 +80,28 @@ func api_lookup(params: Dictionary) -> Variant:
 	result["signals"] = signals
 
 	# Enums
-	var enum_list := ClassDB.class_get_enum_list(class_name, !include_inherited)
+	var enum_list := ClassDB.class_get_enum_list(target_class, !include_inherited)
 	var enums := {}
 	for enum_name in enum_list:
-		var constants := ClassDB.class_get_enum_constants(class_name, enum_name, !include_inherited)
+		var constants := ClassDB.class_get_enum_constants(target_class, enum_name, !include_inherited)
 		var enum_values := {}
 		for constant_name in constants:
-			enum_values[constant_name] = ClassDB.class_get_integer_constant(class_name, constant_name)
+			enum_values[constant_name] = ClassDB.class_get_integer_constant(target_class, constant_name)
 		enums[enum_name] = enum_values
 	result["enums"] = enums
 
 	# Integer constants (not part of named enums)
-	var constant_list := ClassDB.class_get_integer_constant_list(class_name, !include_inherited)
+	var constant_list := ClassDB.class_get_integer_constant_list(target_class, !include_inherited)
 	var constants := {}
 	for c_name in constant_list:
 		# Skip ones already covered by enums
 		var in_enum := false
 		for enum_name in enum_list:
-			if c_name in ClassDB.class_get_enum_constants(class_name, enum_name, !include_inherited):
+			if c_name in ClassDB.class_get_enum_constants(target_class, enum_name, !include_inherited):
 				in_enum = true
 				break
 		if not in_enum:
-			constants[c_name] = ClassDB.class_get_integer_constant(class_name, c_name)
+			constants[c_name] = ClassDB.class_get_integer_constant(target_class, c_name)
 	if not constants.is_empty():
 		result["constants"] = constants
 
@@ -129,9 +129,9 @@ func list_project_files(params: Dictionary) -> Variant:
 
 # ── Private helpers ──────────────────────────────────────────────────────────
 
-func _get_hierarchy(class_name: String) -> Array:
+func _get_hierarchy(cls_name: String) -> Array:
 	var hierarchy := []
-	var current := class_name
+	var current := cls_name
 	while not current.is_empty():
 		hierarchy.append(current)
 		current = ClassDB.get_parent_class(current)
